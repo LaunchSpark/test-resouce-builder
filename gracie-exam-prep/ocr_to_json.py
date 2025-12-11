@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from pathlib import Path
 from typing import Iterable, List, Tuple
 
 from PIL import Image
 import pytesseract
+from pytesseract import TesseractNotFoundError
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".gif"}
 
@@ -71,7 +73,25 @@ def split_question_answer(text: str) -> Tuple[str, str]:
 def run_ocr(image_path: Path, language: str) -> str:
     with Image.open(image_path) as img:
         grayscale_image = img.convert("L")
-    return pytesseract.image_to_string(grayscale_image, lang=language)
+    try:
+        return pytesseract.image_to_string(grayscale_image, lang=language)
+    except TesseractNotFoundError as exc:  # pragma: no cover - depends on host
+        raise SystemExit(
+            "Tesseract OCR is not installed or not on PATH. Install it from "
+            "https://tesseract-ocr.github.io/tessdoc/Installation.html"
+        ) from exc
+
+
+def ensure_tesseract_available() -> None:
+    """Fail fast with a friendly message when the Tesseract binary is missing."""
+
+    if shutil.which("tesseract"):
+        return
+
+    raise SystemExit(
+        "Tesseract OCR binary not found on PATH. Install it and try again. "
+        "See https://tesseract-ocr.github.io/tessdoc/Installation.html for instructions."
+    )
 
 
 def build_questions(image_paths: Iterable[Path], language: str) -> List[dict]:
@@ -109,6 +129,8 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    ensure_tesseract_available()
 
     image_paths = collect_image_paths(args.inputs)
     if not image_paths:
