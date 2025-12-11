@@ -14,14 +14,29 @@ python3 -m pip install -r requirements.txt
 if [[ "$#" -gt 0 ]]; then
   inputs=("$@")
 else
-  readarray -t inputs < <(find "$PROJECT_DIR" -maxdepth 1 -type f \( \
-    -iname '*.png' -o \
-    -iname '*.jpg' -o \
-    -iname '*.jpeg' -o \
-    -iname '*.tiff' -o \
-    -iname '*.bmp' -o \
-    -iname '*.gif' \
-  \) | sort)
+  # macOS ships with an older Bash that lacks readarray/mapfile, so fall back to
+  # a portable loop when necessary.
+  if command -v readarray >/dev/null 2>&1; then
+    readarray -t inputs < <(find "$PROJECT_DIR" -maxdepth 1 -type f \( \
+      -iname '*.png' -o \
+      -iname '*.jpg' -o \
+      -iname '*.jpeg' -o \
+      -iname '*.tiff' -o \
+      -iname '*.bmp' -o \
+      -iname '*.gif' \
+    \) | sort)
+  else
+    while IFS= read -r file; do
+      inputs+=("$file")
+    done < <(find "$PROJECT_DIR" -maxdepth 1 -type f \( \
+      -iname '*.png' -o \
+      -iname '*.jpg' -o \
+      -iname '*.jpeg' -o \
+      -iname '*.tiff' -o \
+      -iname '*.bmp' -o \
+      -iname '*.gif' \
+    \) | sort)
+  fi
 fi
 
 if [[ "${#inputs[@]}" -eq 0 ]]; then
