@@ -70,8 +70,8 @@ def split_question_answer(text: str) -> Tuple[str, str]:
 
 def run_ocr(image_path: Path, language: str) -> str:
     with Image.open(image_path) as img:
-        rgb_image = img.convert("RGB")
-    return pytesseract.image_to_string(rgb_image, lang=language)
+        grayscale_image = img.convert("L")
+    return pytesseract.image_to_string(grayscale_image, lang=language)
 
 
 def build_questions(image_paths: Iterable[Path], language: str) -> List[dict]:
