@@ -9,6 +9,15 @@ cd "$PROJECT_DIR"
 python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 
+# Ensure the Tesseract binary is available before continuing.
+if ! command -v tesseract >/dev/null 2>&1; then
+  cat >&2 <<'EOF'
+Tesseract OCR is required but not installed or not on your PATH.
+Install it from https://tesseract-ocr.github.io/tessdoc/Installation.html and retry.
+EOF
+  exit 1
+fi
+
 # Gather image inputs. Use provided arguments when available; otherwise, scan the
 # project root for common image types.
 if [[ "$#" -gt 0 ]]; then
